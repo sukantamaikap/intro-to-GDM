@@ -1,0 +1,60 @@
+resources:
+# firewall rule
+- name: allow-ssh
+  type: compute.v1.firewall
+  properties:
+    allowed:
+    - IPProtocol: tcp
+      ports:
+      - '22'
+    description: ssh firewall enable from everywhere
+    direction: INGRESS
+    network: $(ref.network-10-70-16.selfLink)
+    priority: 1000
+    sourceRanges:
+    - 0.0.0.0/0
+  metadata:
+    dependsOn:
+    - network-10-70-16
+
+# network and sub-networks
+- name: network-10-70-16
+  type: compute.v1.network
+  properties:
+    autoCreateSubnetworks: false
+    name: network-10-70-16
+- metadata:
+    dependsOn:
+    - network-10-70-16
+  name: net-10-70-16-subnet-australia-southeast1-10-70-10-0-24
+  type: compute.v1.subnetwork
+  properties:
+    description: Subnetwork of network-10-70-16 in australia-southeast1 created by GDM
+    ipCidrRange: 10.70.10.0/24
+    name: net-10-70-16-subnet-australia-southeast1-10-70-10-0-24
+    network: $(ref.network-10-70-16.selfLink)
+    region: australia-southeast1
+
+# vm
+- name: vm-one
+  type: compute.v1.instance
+  properties:
+    zone: australia-southeast1-b
+    machineType: https://www.googleapis.com/compute/v1/projects/playground-sukanta/zones/australia-southeast1-b/machineTypes/n1-standard-1
+    disks:
+    - deviceName: boot-disk-vm-one
+      boot: true
+      initializeParams:
+        diskName: boot-disk-vm-one
+        diskSizeGb: 20
+        sourceImage: https://www.googleapis.com/compute/v1/projects/centos-cloud/global/images/family/centos-8
+      type: PERSISTENT
+    networkInterfaces:
+    - accessConfigs:
+      - name: public-ip-for-vm
+        type: ONE_TO_ONE_NAT
+      network: $(ref.network-10-70-16.selfLink)
+      subnetwork: $(ref.net-10-70-16-subnet-australia-southeast1-10-70-10-0-24.selfLink)
+  metadata:
+    dependsOn:
+    - network-10-70-16

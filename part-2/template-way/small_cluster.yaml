@@ -1,0 +1,48 @@
+imports:
+- path: vpc_network.py
+  name: vpc_network.py
+- path: firewall_rule.py
+  name: firewall_rule.py
+- path: vm.py
+  name: vm.py
+
+resources:
+- name: firewall-rules-for-deployment-1
+  type: firewall_rule.py
+  properties:
+    rules:
+    - name: allow ssh
+      description: "tcp firewall enable from all"
+      network: $(ref.net-10-70-16.network)
+      priority: 1000
+      action: "allow"
+      direction: "INGRESS"
+      sourceRanges: ['0.0.0.0/0']
+      ipProtocol: "tcp"
+      ipPorts: ["22"]
+
+- name: net-10-70-16
+  type: vpc_network.py
+  properties:
+    subnetworks:
+      - region: australia-southeast1
+        cidr: 10.70.10.0/24
+
+- name: vm one
+  type: vm.py
+  properties:
+    zone: australia-southeast1-b
+    machineType: n1-standard-1
+    networkInterfaces:
+    - network: $(ref.net-10-70-16.network)
+      subnetwork: $(ref.net-10-70-16.subnetworks[0])
+      accessConfigs:
+      - name: public ip for vm
+- name: vm two
+  type: vm.py
+  properties:
+    zone: australia-southeast1-c
+    machineType: n1-standard-1
+    networkInterfaces:
+    - network: $(ref.net-10-70-16.network)
+      subnetwork: $(ref.net-10-70-16.subnetworks[0])
